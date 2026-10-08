@@ -305,9 +305,10 @@
   }
 
   document.getElementById('rate').addEventListener('input', (e) => {
-    document.getElementById('rate-val').innerText = `${e.target.value}x`;
+    const rateVal = parseFloat(e.target.value).toFixed(1);
+    document.getElementById('rate-val').innerText = `${rateVal}x`;
     if (currentAudio) {
-      currentAudio.playbackRate = parseFloat(e.target.value);
+      currentAudio.playbackRate = parseFloat(rateVal);
     }
   });
 
