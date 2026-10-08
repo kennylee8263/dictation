@@ -311,7 +311,7 @@
     }
   });
 
-  function playAudioOrSpeech(text, originalIndex, callback) {
+function playAudioOrSpeech(text, originalIndex, callback) {
     if (synth.speaking) synth.cancel();
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
 
@@ -323,12 +323,15 @@
       const selectedRate = parseFloat(document.getElementById('rate').value);
       audio.playbackRate = selectedRate;
 
-      audio.play().then(() => {
-        currentAudio = audio;
-        if (callback) audio.onended = callback;
-      }).catch(() => {
-        speakWithTTS(text, callback);
-      });
+      // 0.15초(150ms)의 미세 지연을 주어 스피커/디코더가 준비될 시간을 줍니다.
+      setTimeout(() => {
+        audio.play().then(() => {
+          currentAudio = audio;
+          if (callback) audio.onended = callback;
+        }).catch(() => {
+          speakWithTTS(text, callback);
+        });
+      }, 150); 
     } else {
       speakWithTTS(text, callback);
     }
