@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>초등 받아쓰기 급수별 연습기</title>
 
-  <!-- 카카오 애드핏 또는 기타 광고 스크립트 (필요 시 주석 해제 후 사용) -->
-  <!-- <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script> -->
-
   <style>
     body {
       font-family: 'Nanum Gothic', sans-serif;
@@ -33,6 +30,20 @@
       font-size: 16px; font-weight: bold; cursor: pointer; background: #e0e0e0; color: #555;
     }
     .tab-btn.active { background: #4A90E2; color: white; }
+
+    /* 학년 및 급수 선택 영역 */
+    .level-select-box {
+      background: #eef2f5; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .select-row {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .level-select-box label { font-weight: bold; color: #333; font-size: 15px; }
+    .level-select-box select {
+      padding: 8px 12px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; font-weight: bold;
+      background: white;
+    }
 
     /* 쿠팡 파트너스 배너 스타일 */
     .coupang-banner-box {
@@ -72,14 +83,6 @@
     .section { display: none; }
     .section.active { display: block; }
 
-    .level-select-box {
-      background: #eef2f5; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;
-    }
-    .level-select-box label { font-weight: bold; color: #333; margin-right: 8px; }
-    .level-select-box select {
-      padding: 8px 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; font-weight: bold;
-    }
-
     .sentence-input {
       display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
     }
@@ -118,10 +121,22 @@
     <button class="tab-btn" onclick="switchTab('setup')">⚙️ 급수 선택/수정</button>
   </div>
 
+  <!-- 학년/학기 및 급수 선택 상자 -->
   <div class="level-select-box">
-    <label for="grade-level">📌 급수 선택:</label>
-    <select id="grade-level" onchange="changeLevel()">
-    </select>
+    <div class="select-row">
+      <label for="grade-select">📚 학년/학기:</label>
+      <select id="grade-select" onchange="changeGrade()">
+        <option value="1-2" selected>1학년 2학기</option>
+        <!-- 데이터 추가 시 아래 옵션 주석 해제하여 사용 가능 -->
+        <!-- <option value="1-1">1학년 1학기 (준비중)</option> -->
+        <!-- <option value="2-1">2학년 1학기 (준비중)</option> -->
+      </select>
+    </div>
+    <div class="select-row">
+      <label for="grade-level">📌 급수 선택:</label>
+      <select id="grade-level" onchange="changeLevel()">
+      </select>
+    </div>
   </div>
 
   <div id="setup-section" class="section">
@@ -142,7 +157,7 @@
     </div>
 
     <div class="quiz-card">
-      <div id="current-level-title" style="font-size: 14px; color: #888; margin-bottom: 5px;">[ 1급 연습 중 ]</div>
+      <div id="current-level-title" style="font-size: 14px; color: #888; margin-bottom: 5px;">[ 1학년 2학기 1급 연습 중 ]</div>
       <div id="progress" class="progress">문제 1 / 10</div>
       <div class="guide-text">✏️ 공책과 연필을 준비하고 소리를 들어보세요!</div>
       
@@ -167,25 +182,29 @@
 </div>
 
 <script>
+  // 학년/학기별 급수 데이터 구조화
   const defaultGradeData = {
-    1: ["신나요.", "뿌듯해요.", "둥실둥실", "활짝 피었습니다.", "얼음처럼 꽁꽁!", "내 마음이 반짝반짝", "곰이 그림책을 봅니다.", "계곡에서 첨벙첨벙", "보고 싶어요.", "친구에게 미안했어요."],
-    2: ["괜찮아요.", "살랑살랑 움직입니다.", "귀여운 고양이들이", "씽씽 지나갑니다.", "여러 색깔의 단풍잎", "친구들의 앞에서", "노래를 불렀어.", "날 모두 부러워해", "내 마음이 반짝반짝", "깜짝 놀랐어."],
-    3: ["팔꿈치로 도망갔어요.", "가위바위보", "운동장이 넓다.", "연필심이 닳았다.", "탈출을 했네요!", "할아버지는 누구세요?", "그렇다면 알려주지.", "제자리에 둡시다.", "바람이 씽씽", "꼭 안아 주는 날"],
-    4: ["썩은 동아줄이었어요.", "뚝 떨어졌어요.", "불빛이 밝다.", "길이가 짧다.", "감기를 앓다.", "물이 없다.", "우산을 잃어버렸다.", "머리를 긁는다.", "잡아먹힐 뻔했어.", "쓰윽 입을 닦아요"],
-    5: ["발표해 볼 거예요.", "알맞은 크기의 목소리로", "된장찌개를 먹었다.", "친구를 만났다.", "빨갛게 익은", "자세히 쓴다.", "또박또박 말한다.", "귀 기울여 듣는다.", "책을 읽습니다.", "꿈을 꿉니다."],
-    6: ["일곱 시에 일어났다.", "사과를 땄다.", "정말 재미있었다.", "숙제를 하고 잤다.", "공부를 열심히 할 거예요.", "수고했어요.", "잘할 수 있겠죠?", "시끄럽고 복잡해요.", "사람들도 많고요.", "한눈팔지 않아요."],
-    7: ["미역도 맛있어.", "골고루 잘 먹는구나.", "할머니 댁에 가기로", "재미있게 놀았다.", "이를 닦습니다.", "늑대가 나타났어요!", "장난쳤어요", "화를 내며 돌아갔어요", "아무도 오지 않았어요", "거짓말을 후회했답니다"],
-    8: ["옛적 옛날에", "많이 얻을 수 있어.", "저녁이 되자", "몰래 맷돌을 훔쳐", "소금이 쏟아져", "소금이 쌓여 갔습니다.", "잊어버렸습니다.", "가라앉고 말았습니다.", "그래서 바닷물이", "짜게 되었습니다."],
-    9: ["웃음은 힘이 세다.", "책이거든.", "포기하지 않고", "잘 돌리면 좋겠다.", "동물의 먹이입니다.", "다람쥐에게 도토리를", "연필 한 자루", "신발 한 켤레", "넘기면 돼", "둥둥 떠다녀요."],
-    10: ["책을 펼치면", "어떻게 해?", "뭘 할 수 있어?", "내 책 돌려줄래?", "충전할 필요 없어.", "왜냐하면", "때문이다.", "이리저리 움직였다.", "칭찬해 주셨다.", "잘 돌리면 좋겠다."],
-    11: ["종이를 뒤집어서", "빛나고 싶니?", "도움이 필요한 친구를", "꽃향기 맡습니다.", "대피해야 합니다.", "안 하면 됩니다.", "갈 수 없게 됩니다.", "괜찮아 아저씨", "낮잠을 자는데", "세 개씩 묶었어요."],
-    12: ["가르마를 탔어요", "꼬불꼬불 말았어요.", "머리카락을 땋았어요", "깜짝 놀라 외쳤어요", "깃털이 있잖아.", "예뻐지고 싶은 거예요.", "심장이 쿵쾅쿵쾅", "온몸이 화끈화끈", "새하얘졌어요.", "왜 입이 안 떨어지지?"],
-    13: ["밤에도 불을 밝혀", "널리 알리고 보존하는", "문어의 빨판을", "본떠 만들었습니다.", "잘 붙어", "칫솔걸이", "떨어지게 됩니다.", "숲속을 걷다 보면", "옷에 열매가 달라붙습니다.", "도꼬마리 열매에는"],
-    14: ["아무리 찾아도 없어.", "뚫어지게 쳐다봤어.", "연필 깨끗이 깎아 오기.", "잃어버리는 바람에", "엄마한테 혼날 텐데.", "세 번째니까.", "철석같이 약속을", "큰 소리로 외쳤어.", "가방을 열어젖혔어.", "달콤하고 짭조름했다."],
-    15: ["덩달아 신나.", "친구랑 싸웠어.", "그네를 탔어.", "재미가 없는걸.", "재채기했다.", "내가 뽑혔다는 걸", "사랑받을 수 있겠지?", "맛이 없어서?", "맛있게 드세요.", "뭐라고 했어?"],
-    16: ["달달 볶은 다음", "브로콜리 섞어주고", "새하얀 우유 넣고", "보글보글 끓여주면", "끝내주게 맛있는", "항아리를 빼앗으려고", "팔지 않았단 말일세.", "깨부숴야겠어.", "고장 난 시계 때문에", "기분이 좋지 않았어요"]
+    "1-2": {
+      1: ["신나요.", "뿌듯해요.", "둥실둥실", "활짝 피었습니다.", "얼음처럼 꽁꽁!", "내 마음이 반짝반짝", "곰이 그림책을 봅니다.", "계곡에서 첨벙첨벙", "보고 싶어요.", "친구에게 미안했어요."],
+      2: ["괜찮아요.", "살랑살랑 움직입니다.", "귀여운 고양이들이", "씽씽 지나갑니다.", "여러 색깔의 단풍잎", "친구들의 앞에서", "노래를 불렀어.", "날 모두 부러워해", "내 마음이 반짝반짝", "깜짝 놀랐어."],
+      3: ["팔꿈치로 도망갔어요.", "가위바위보", "운동장이 넓다.", "연필심이 닳았다.", "탈출을 했네요!", "할아버지는 누구세요?", "그렇다면 알려주지.", "제자리에 둡시다.", "바람이 씽씽", "꼭 안아 주는 날"],
+      4: ["썩은 동아줄이었어요.", "뚝 떨어졌어요.", "불빛이 밝다.", "길이가 짧다.", "감기를 앓다.", "물이 없다.", "우산을 잃어버렸다.", "머리를 긁는다.", "잡아먹힐 뻔했어.", "쓰윽 입을 닦아요"],
+      5: ["발표해 볼 거예요.", "알맞은 크기의 목소리로", "된장찌개를 먹었다.", "친구를 만났다.", "빨갛게 익은", "자세히 쓴다.", "또박또박 말한다.", "귀 기울여 듣는다.", "책을 읽습니다.", "꿈을 꿉니다."],
+      6: ["일곱 시에 일어났다.", "사과를 땄다.", "정말 재미있었다.", "숙제를 하고 잤다.", "공부를 열심히 할 거예요.", "수고했어요.", "잘할 수 있겠죠?", "시끄럽고 복잡해요.", "사람들도 많고요.", "한눈팔지 않아요."],
+      7: ["미역도 맛있어.", "골고루 잘 먹는구나.", "할머니 댁에 가기로", "재미있게 놀았다.", "이를 닦습니다.", "늑대가 나타났어요!", "장난쳤어요", "화를 내며 돌아갔어요", "아무도 오지 않았어요", "거짓말을 후회했답니다"],
+      8: ["옛적 옛날에", "많이 얻을 수 있어.", "저녁이 되자", "몰래 맷돌을 훔쳐", "소금이 쏟아져", "소금이 쌓여 갔습니다.", "잊어버렸습니다.", "가라앉고 말았습니다.", "그래서 바닷물이", "짜게 되었습니다."],
+      9: ["웃음은 힘이 세다.", "책이거든.", "포기하지 않고", "잘 돌리면 좋겠다.", "동물의 먹이입니다.", "다람쥐에게 도토리를", "연필 한 자루", "신발 한 켤레", "넘기면 돼", "둥둥 떠다녀요."],
+      10: ["책을 펼치면", "어떻게 해?", "뭘 할 수 있어?", "내 책 돌려줄래?", "충전할 필요 없어.", "왜냐하면", "때문이다.", "이리저리 움직였다.", "칭찬해 주셨다.", "잘 돌리면 좋겠다."],
+      11: ["종이를 뒤집어서", "빛나고 싶니?", "도움이 필요한 친구를", "꽃향기 맡습니다.", "대피해야 합니다.", "안 하면 됩니다.", "갈 수 없게 됩니다.", "괜찮아 아저씨", "낮잠을 자는데", "세 개씩 묶었어요."],
+      12: ["가르마를 탔어요", "꼬불꼬불 말았어요.", "머리카락을 땋았어요", "깜짝 놀라 외쳤어요", "깃털이 있잖아.", "예뻐지고 싶은 거예요.", "심장이 쿵쾅쿵쾅", "온몸이 화끈화끈", "새하얘졌어요.", "왜 입이 안 떨어지지?"],
+      13: ["밤에도 불을 밝혀", "널리 알리고 보존하는", "문어의 빨판을", "본떠 만들었습니다.", "잘 붙어", "칫솔걸이", "떨어지게 됩니다.", "숲속을 걷다 보면", "옷에 열매가 달라붙습니다.", "도꼬마리 열매에는"],
+      14: ["아무리 찾아도 없어.", "뚫어지게 쳐다봤어.", "연필 깨끗이 깎아 오기.", "잃어버리는 바람에", "엄마한테 혼날 텐데.", "세 번째니까.", "철석같이 약속을", "큰 소리로 외쳤어.", "가방을 열어젖혔어.", "달콤하고 짭조름했다."],
+      15: ["덩달아 신나.", "친구랑 싸웠어.", "그네를 탔어.", "재미가 없는걸.", "재채기했다.", "내가 뽑혔다는 걸", "사랑받을 수 있겠지?", "맛이 없어서?", "맛있게 드세요.", "뭐라고 했어?"],
+      16: ["달달 볶은 다음", "브로콜리 섞어주고", "새하얀 우유 넣고", "보글보글 끓여주면", "끝내주게 맛있는", "항아리를 빼앗으려고", "팔지 않았단 말일세.", "깨부숴야겠어.", "고장 난 시계 때문에", "기분이 좋지 않았어요"]
+    }
   };
 
+  let currentGradeKey = "1-2";
   let currentLevel = 1;
   let currentList = [];
   let shuffledIndices = [];
@@ -195,13 +214,22 @@
 
   window.onload = function() {
     initLevelSelect();
-    loadLevelData(1);
+    loadLevelData(currentGradeKey, 1);
   };
+
+  function changeGrade() {
+    currentGradeKey = document.getElementById('grade-select').value;
+    initLevelSelect();
+    loadLevelData(currentGradeKey, 1);
+  }
 
   function initLevelSelect() {
     const select = document.getElementById('grade-level');
     select.innerHTML = '';
-    for (let i = 1; i <= 16; i++) {
+    const gradeData = defaultGradeData[currentGradeKey] || {};
+    const totalLevels = Object.keys(gradeData).length || 10;
+
+    for (let i = 1; i <= totalLevels; i++) {
       select.innerHTML += `<option value="${i}">${i}급 받아쓰기</option>`;
     }
   }
@@ -209,12 +237,19 @@
   function changeLevel() {
     const level = parseInt(document.getElementById('grade-level').value);
     currentLevel = level;
-    loadLevelData(level);
+    loadLevelData(currentGradeKey, level);
   }
 
-  function loadLevelData(level) {
-    const saved = localStorage.getItem(`dictation_level_${level}`);
-    currentList = saved ? JSON.parse(saved) : [...defaultGradeData[level]];
+  function loadLevelData(gradeKey, level) {
+    const saved = localStorage.getItem(`dictation_${gradeKey}_level_${level}`);
+    
+    if (saved) {
+      currentList = JSON.parse(saved);
+    } else if (defaultGradeData[gradeKey] && defaultGradeData[gradeKey][level]) {
+      currentList = [...defaultGradeData[gradeKey][level]];
+    } else {
+      currentList = Array(10).fill("");
+    }
 
     renderInputs();
     startPractice();
@@ -245,8 +280,8 @@
       newList.push(text);
     }
     currentList = newList;
-    localStorage.setItem(`dictation_level_${currentLevel}`, JSON.stringify(currentList));
-    alert(`${currentLevel}급 문장이 저장되었습니다!`);
+    localStorage.setItem(`dictation_${currentGradeKey}_level_${currentLevel}`, JSON.stringify(currentList));
+    alert(`${currentGradeKey.replace('-', '학년 ')}학기 ${currentLevel}급 문장이 저장되었습니다!`);
     switchTab('practice');
     startPractice();
   }
@@ -258,8 +293,13 @@
     updateUI();
   }
 
+  function getGradeText(key) {
+    const parts = key.split('-');
+    return `${parts[0]}학년 ${parts[1]}학기`;
+  }
+
   function updateUI() {
-    document.getElementById('current-level-title').innerText = `[ ${currentLevel}급 연습 중 ]`;
+    document.getElementById('current-level-title').innerText = `[ ${getGradeText(currentGradeKey)} ${currentLevel}급 연습 중 ]`;
     document.getElementById('progress').innerText = `문제 ${currentIndex + 1} / 10`;
   }
 
@@ -274,7 +314,10 @@
     if (synth.speaking) synth.cancel();
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
 
-    const audioPath = `audio/${currentLevel}_${originalIndex + 1}.mp3`;
+    // MP3 경로 (예: audio/1-2_1_1.mp3 또는 기존 오디오 파일 호환 audio/1_1.mp3)
+    const audioPath = `audio/${currentGradeKey}_${currentLevel}_${originalIndex + 1}.mp3`;
+    const fallbackPath = `audio/${currentLevel}_${originalIndex + 1}.mp3`;
+
     const audio = new Audio(audioPath);
 
     const selectedRate = parseFloat(document.getElementById('rate').value);
@@ -284,7 +327,16 @@
       currentAudio = audio;
       if (callback) audio.onended = callback;
     }).catch(() => {
-      speakWithTTS(text, callback);
+      // 1-2 기존 예전 오디오 파일 이름(1_1.mp3 형태)으로 시도
+      const fallbackAudio = new Audio(fallbackPath);
+      fallbackAudio.playbackRate = selectedRate;
+      fallbackAudio.play().then(() => {
+        currentAudio = fallbackAudio;
+        if (callback) fallbackAudio.onended = callback;
+      }).catch(() => {
+        // MP3 없으면 브라우저 음성 재생
+        speakWithTTS(text, callback);
+      });
     });
   }
 
@@ -324,7 +376,7 @@
       playCurrent(false);
     } else {
       speakWithTTS("모든 문제를 다 풀었습니다! 수고하셨습니다.");
-      alert(`🎉 ${currentLevel}급 10문제를 모두 마쳤습니다! 공책을 확인해 보세요.`);
+      alert(`🎉 ${getGradeText(currentGradeKey)} ${currentLevel}급 10문제를 모두 마쳤습니다! 공책을 확인해 보세요.`);
       startPractice();
     }
   }
