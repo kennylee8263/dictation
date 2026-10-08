@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>초등 받아쓰기 연습 (공책 작성용)</title>
+  <title>초등 받아쓰기 급수별 연습기</title>
   <style>
     body {
       font-family: 'Nanum Gothic', sans-serif;
@@ -23,7 +23,6 @@
     }
     h1 { color: #2c3e50; text-align: center; font-size: 22px; margin-top: 0; }
     
-    /* 탭 메뉴 (선생님 설정 / 아이 연습) */
     .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
     .tab-btn {
       flex: 1; padding: 12px; border: none; border-radius: 10px;
@@ -31,9 +30,16 @@
     }
     .tab-btn.active { background: #4A90E2; color: white; }
 
-    /* 입력 영역 */
     .section { display: none; }
     .section.active { display: block; }
+
+    .level-select-box {
+      background: #eef2f5; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;
+    }
+    .level-select-box label { font-weight: bold; color: #333; margin-right: 8px; }
+    .level-select-box select {
+      padding: 8px 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; font-weight: bold;
+    }
 
     .sentence-input {
       display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
@@ -43,15 +49,13 @@
       flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px;
     }
 
-    /* 연습 영역 */
     .quiz-card {
       background: #f9f9f9; border: 2px dashed #4A90E2; border-radius: 15px;
       padding: 30px 20px; text-align: center; margin-bottom: 20px;
     }
     .progress { font-size: 18px; font-weight: bold; color: #4A90E2; margin-bottom: 10px; }
-    .guide-text { font-size: 16px; color: #666; margin-bottom: 20px; }
+    .guide-text { font-size: 15px; color: #666; margin-bottom: 20px; }
 
-    /* 버튼 스타일 */
     .btn {
       width: 100%; padding: 15px; border: none; border-radius: 12px;
       font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.2s;
@@ -68,22 +72,30 @@
 <body>
 
 <div class="container">
-  <h1>✏️ 초등 받아쓰기 연습기</h1>
+  <h1>✏️ 초등 받아쓰기 급수별 연습기</h1>
 
   <!-- 탭 전환 버튼 -->
   <div class="tab-buttons">
     <button class="tab-btn active" onclick="switchTab('practice')">🎧 아이 연습용</button>
-    <button class="tab-btn" onclick="switchTab('setup')">⚙️ 문장 10개 입력</button>
+    <button class="tab-btn" onclick="switchTab('setup')">⚙️ 급수 선택/수정</button>
   </div>
 
-  <!-- 1. 부모/선생님 문장 입력 화면 -->
+  <!-- 급수 선택 공통 영역 -->
+  <div class="level-select-box">
+    <label for="grade-level">📌 급수 선택:</label>
+    <select id="grade-level" onchange="changeLevel()">
+      <!-- 1급부터 16급까지 동적 생성 -->
+    </select>
+  </div>
+
+  <!-- 1. 급수 및 문장 편집 화면 -->
   <div id="setup-section" class="section">
-    <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
-      💡 받아쓰기로 불러줄 10개 문장을 작성해 주세요. (자동 저장됩니다)
+    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
+      💡 급수를 선택하면 해당 급수의 문장이 자동으로 들어옵니다. 필요 시 직접 수정 후 저장하실 수 있습니다.
     </p>
     <form id="sentence-form">
       <div id="inputs-container"></div>
-      <button type="button" class="btn btn-save" onclick="saveSentences()">💾 저장하기</button>
+      <button type="button" class="btn btn-save" onclick="saveCustomSentences()">💾 이 문장으로 저장하기</button>
     </form>
   </div>
 
@@ -97,6 +109,7 @@
     </div>
 
     <div class="quiz-card">
+      <div id="current-level-title" style="font-size: 14px; color: #888; margin-bottom: 5px;">[ 1급 연습 중 ]</div>
       <div id="progress" class="progress">문제 1 / 10</div>
       <div class="guide-text">✏️ 공책과 연필을 준비하고 소리를 들어보세요!</div>
       
@@ -109,36 +122,235 @@
 </div>
 
 <script>
-  // 기본 제공 10개 문장 예시
-  const defaultSentences = [
-    "바른 자세로 앉아요.",
-    "선생님 말씀에 귀를 기울여요.",
-    "친구와 사이좋게 지냅니다.",
-    "책을 크게 읽었습니다.",
-    "연필을 올바르게 잡아요.",
-    "글씨를 또박또박 씁니다.",
-    "오늘 날씨가 매우 맑습니다.",
-    "약속 시간을 잘 지켜요.",
-    "감사하는 마음을 가져요.",
-    "스스로 정리 정돈을 합니다."
-  ];
+  // 제공해주신 PDF 급수표 데이터베이스 (1급~16급)
+  const defaultGradeData = {
+    1: [
+      "신나요.",
+      "뿌듯해요.",
+      "둥실둥실",
+      "활짝 피었습니다.",
+      "얼음처럼 꽁꽁!",
+      "내 마음이 반짝반짝",
+      "곰이 그림책을 봅니다.",
+      "계곡에서 첨벙첨벙",
+      "보고 싶어요.",
+      "친구에게 미안했어요."
+    ],
+    2: [
+      "괜찮아요.",
+      "살랑살랑 움직입니다.",
+      "귀여운 고양이들이",
+      "씽씽 지나갑니다.",
+      "여러 색깔의 단풍잎",
+      "친구들의 앞에서",
+      "노래를 불렀어.",
+      "날 모두 부러워해",
+      "내 마음이 반짝반짝",
+      "깜짝 놀랐어."
+    ],
+    3: [
+      "팔꿈치로 도망갔어요.",
+      "가위바위보",
+      "운동장이 넓다.",
+      "연필심이 닳았다.",
+      "탈출을 했네요!",
+      "할아버지는 누구세요?",
+      "그렇다면 알려주지.",
+      "제자리에 둡시다.",
+      "바람이 씽씽",
+      "꼭 안아 주는 날"
+    ],
+    4: [
+      "썩은 동아줄이었어요.",
+      "뚝 떨어졌어요.",
+      "불빛이 밝다.",
+      "길이가 짧다.",
+      "감기를 앓다.",
+      "물이 없다.",
+      "우산을 잃어버렸다.",
+      "머리를 긁는다.",
+      "잡아먹힐 뻔했어.",
+      "쓰윽 입을 닦아요"
+    ],
+    5: [
+      "발표해 볼 거예요.",
+      "알맞은 크기의 목소리로",
+      "된장찌개를 먹었다.",
+      "친구를 만났다.",
+      "빨갛게 익은",
+      "자세히 쓴다.",
+      "또박또박 말한다.",
+      "귀 기울여 듣는다.",
+      "책을 읽습니다.",
+      "꿈을 꿉니다."
+    ],
+    6: [
+      "일곱 시에 일어났다.",
+      "사과를 땄다.",
+      "정말 재미있었다.",
+      "숙제를 하고 잤다.",
+      "공부를 열심히 할 거예요.",
+      "수고했어요.",
+      "잘할 수 있겠죠?",
+      "시끄럽고 복잡해요.",
+      "사람들도 많고요.",
+      "한눈팔지 않아요."
+    ],
+    7: [
+      "미역도 맛있어.",
+      "골고루 잘 먹는구나.",
+      "할머니 댁에 가기로",
+      "재미있게 놀았다.",
+      "이를 닦습니다.",
+      "늑대가 나타났어요!",
+      "장난쳤어요",
+      "화를 내며 돌아갔어요",
+      "아무도 오지 않았어요",
+      "거짓말을 후회했답니다"
+    ],
+    8: [
+      "옛적 옛날에",
+      "많이 얻을 수 있어.",
+      "저녁이 되자",
+      "몰래 맷돌을 훔쳐",
+      "소금이 쏟아져",
+      "소금이 쌓여 갔습니다.",
+      "잊어버렸습니다.",
+      "가라앉고 말았습니다.",
+      "그래서 바닷물이",
+      "짜게 되었습니다."
+    ],
+    9: [
+      "웃음은 힘이 세다.",
+      "책이거든.",
+      "포기하지 않고",
+      "잘 돌리면 좋겠다.",
+      "동물의 먹이입니다.",
+      "다람쥐에게 도토리를",
+      "연필 한 자루",
+      "신발 한 켤레",
+      "넘기면 돼",
+      "둥둥 떠다녀요."
+    ],
+    10: [
+      "책을 펼치면",
+      "어떻게 해?",
+      "뭘 할 수 있어?",
+      "내 책 돌려줄래?",
+      "충전할 필요 없어.",
+      "왜냐하면",
+      "때문이다.",
+      "이리저리 움직였다.",
+      "칭찬해 주셨다.",
+      "잘 돌리면 좋겠다."
+    ],
+    11: [
+      "종이를 뒤집어서",
+      "빛나고 싶니?",
+      "도움이 필요한 친구를",
+      "꽃향기 맡습니다.",
+      "대피해야 합니다.",
+      "안 하면 됩니다.",
+      "갈 수 없게 됩니다.",
+      "괜찮아 아저씨",
+      "낮잠을 자는데",
+      "세 개씩 묶었어요."
+    ],
+    12: [
+      "가르마를 탔어요",
+      "꼬불꼬불 말았어요.",
+      "머리카락을 땋았어요",
+      "깜짝 놀라 외쳤어요",
+      "깃털이 있잖아.",
+      "예뻐지고 싶은 거예요.",
+      "심장이 쿵쾅쿵쾅",
+      "온몸이 화끈화끈",
+      "새하얘졌어요.",
+      "왜 입이 안 떨어지지?"
+    ],
+    13: [
+      "밤에도 불을 밝혀",
+      "널리 알리고 보존하는",
+      "문어의 빨판을",
+      "본떠 만들었습니다.",
+      "잘 붙어",
+      "칫솔걸이",
+      "떨어지게 됩니다.",
+      "숲속을 걷다 보면",
+      "옷에 열매가 달라붙습니다.",
+      "도꼬마리 열매에는"
+    ],
+    14: [
+      "아무리 찾아도 없어.",
+      "뚫어지게 쳐다봤어.",
+      "연필 깨끗이 깎아 오기.",
+      "잃어버리는 바람에",
+      "엄마한테 혼날 텐데.",
+      "세 번째니까.",
+      "철석같이 약속을",
+      "큰 소리로 외쳤어.",
+      "가방을 열어젖혔어.",
+      "달콤하고 짭조름했다."
+    ],
+    15: [
+      "덩달아 신나.",
+      "친구랑 싸웠어.",
+      "그네를 탔어.",
+      "재미가 없는걸.",
+      "재채기했다.",
+      "내가 뽑혔다는 걸",
+      "사랑받을 수 있겠지?",
+      "맛이 없어서?",
+      "맛있게 드세요.",
+      "뭐라고 했어?"
+    ],
+    16: [
+      "달달 볶은 다음",
+      "브로콜리 섞어주고",
+      "새하얀 우유 넣고",
+      "보글보글 끓여주면",
+      "끝내주게 맛있는",
+      "항아리를 빼앗으려고",
+      "팔지 않았단 말일세.",
+      "깨부숴야겠어.",
+      "고장 난 시계 때문에",
+      "기분이 좋지 않았어요"
+    ]
+  };
 
+  let currentLevel = 1;
   let currentList = [];
   let shuffledList = [];
   let currentIndex = 0;
   const synth = window.speechSynthesis;
 
-  // 초기화 함수
   window.onload = function() {
-    // 저장된 문장이 있으면 가져오고, 없으면 기본 문장 사용
-    const saved = localStorage.getItem('dictation_sentences');
-    currentList = saved ? JSON.parse(saved) : defaultSentences;
+    initLevelSelect();
+    loadLevelData(1);
+  };
+
+  function initLevelSelect() {
+    const select = document.getElementById('grade-level');
+    select.innerHTML = '';
+    for (let i = 1; i <= 16; i++) {
+      select.innerHTML += `<option value="${i}">${i}급 받아쓰기</option>`;
+    }
+  }
+
+  function changeLevel() {
+    const level = parseInt(document.getElementById('grade-level').value);
+    currentLevel = level;
+    loadLevelData(level);
+  }
+
+  function loadLevelData(level) {
+    const saved = localStorage.getItem(`dictation_level_${level}`);
+    currentList = saved ? JSON.parse(saved) : [...defaultGradeData[level]];
 
     renderInputs();
     startPractice();
-  };
+  }
 
-  // 문장 입력 폼 생성
   function renderInputs() {
     const container = document.getElementById('inputs-container');
     container.innerHTML = '';
@@ -153,8 +365,7 @@
     }
   }
 
-  // 문장 저장하기
-  function saveSentences() {
+  function saveCustomSentences() {
     const newList = [];
     for (let i = 0; i < 10; i++) {
       const text = document.getElementById(`sentence-${i}`).value.trim();
@@ -165,35 +376,31 @@
       newList.push(text);
     }
     currentList = newList;
-    localStorage.setItem('dictation_sentences', JSON.stringify(currentList));
-    alert('문장 10개가 저장되었습니다!');
+    localStorage.setItem(`dictation_level_${currentLevel}`, JSON.stringify(currentList));
+    alert(`${currentLevel}급 문장이 저장되었습니다!`);
     switchTab('practice');
     startPractice();
   }
 
-  // 배열 섞기 (랜덤 생성)
   function shuffle(array) {
     return [...array].sort(() => Math.random() - 0.5);
   }
 
-  // 연습 시작 (랜덤으로 섞기)
   function startPractice() {
     shuffledList = shuffle(currentList);
     currentIndex = 0;
     updateUI();
   }
 
-  // 화면 UI 업데이트
   function updateUI() {
+    document.getElementById('current-level-title').innerText = `[ ${currentLevel}급 연습 중 ]`;
     document.getElementById('progress').innerText = `문제 ${currentIndex + 1} / ${shuffledList.length}`;
   }
 
-  // 속도 조절 이벤트
   document.getElementById('rate').addEventListener('input', (e) => {
     document.getElementById('rate-val').innerText = `${e.target.value}x`;
   });
 
-  // 음성 재생 함수
   function speak(text, callback) {
     if (synth.speaking) synth.cancel();
 
@@ -201,7 +408,6 @@
     utterance.lang = 'ko-KR';
     utterance.rate = parseFloat(document.getElementById('rate').value);
 
-    // 한국어 목소리 설정
     const voices = synth.getVoices();
     const koreanVoice = voices.find(v => v.lang.includes('ko'));
     if (koreanVoice) utterance.voice = koreanVoice;
@@ -211,14 +417,12 @@
     synth.speak(utterance);
   }
 
-  // 현재 문장 읽기 (두 번 읽기 옵션 지원)
   function playCurrent(repeatTwoTimes = false) {
     const text = shuffledList[currentIndex];
     
     if (!repeatTwoTimes) {
       speak(`${currentIndex + 1}번. ${text}`);
     } else {
-      // 첫 번째 읽기 -> 완료 후 3초 뒤 두 번째 읽기
       speak(`${currentIndex + 1}번. ${text}`, () => {
         setTimeout(() => {
           speak(`다시 읽겠습니다. ${text}`);
@@ -227,7 +431,6 @@
     }
   }
 
-  // 다음 문제 이동
   function nextQuestion() {
     if (currentIndex < shuffledList.length - 1) {
       currentIndex++;
@@ -235,16 +438,13 @@
       playCurrent(false);
     } else {
       speak("모든 문제를 다 풀었습니다! 수고하셨습니다.");
-      alert('🎉 10문제를 모두 마쳤습니다! 공책을 확인해 보세요.');
-      startPractice(); // 다시 처음부터 섞어서 준비
+      alert(`🎉 ${currentLevel}급 10문제를 모두 마쳤습니다! 공책을 확인해 보세요.`);
+      startPractice();
     }
   }
 
-  // 탭 전환
   function switchTab(tabName) {
     const tabs = document.querySelectorAll('.tab-btn');
-    const sections = document.querySelectorAll('.section');
-    
     tabs[0].classList.toggle('active', tabName === 'practice');
     tabs[1].classList.toggle('active', tabName === 'setup');
     
