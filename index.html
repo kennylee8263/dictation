@@ -31,7 +31,7 @@
     }
     .tab-btn.active { background: #4A90E2; color: white; }
 
-    /* 학년 및 급수 선택 영역 */
+    /* 선택 상자 영역 */
     .level-select-box {
       background: #eef2f5; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;
       display: flex; flex-direction: column; gap: 10px;
@@ -45,7 +45,7 @@
       background: white;
     }
 
-    /* 쿠팡 파트너스 배너 스타일 */
+    /* 쿠팡 파트너스 배너 */
     .coupang-banner-box {
       margin: 20px 0 10px 0;
       padding: 15px;
@@ -71,25 +71,15 @@
       font-size: 15px;
       transition: background 0.2s;
     }
-    .btn-coupang:hover {
-      background: #c1121f;
-    }
-    .coupang-disclaimer {
-      font-size: 11px;
-      color: #888;
-      margin-top: 8px;
-    }
+    .btn-coupang:hover { background: #c1121f; }
+    .coupang-disclaimer { font-size: 11px; color: #888; margin-top: 8px; }
 
     .section { display: none; }
     .section.active { display: block; }
 
-    .sentence-input {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-    }
+    .sentence-input { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
     .sentence-input span { width: 25px; font-weight: bold; color: #555; }
-    .sentence-input input {
-      flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px;
-    }
+    .sentence-input input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
 
     .quiz-card {
       background: #f9f9f9; border: 2px dashed #4A90E2; border-radius: 15px;
@@ -107,8 +97,8 @@
     .btn-next { background: #2196F3; color: white; }
     .btn-save { background: #4A90E2; color: white; margin-top: 10px; }
 
-    .controls { background: #eef2f5; padding: 12px; border-radius: 10px; margin-bottom: 15px; }
-    .controls label { font-size: 14px; font-weight: bold; color: #333; }
+    .controls { background: #eef2f5; padding: 12px; border-radius: 10px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .control-row { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: bold; color: #333; }
   </style>
 </head>
 <body>
@@ -121,15 +111,12 @@
     <button class="tab-btn" onclick="switchTab('setup')">⚙️ 급수 선택/수정</button>
   </div>
 
-  <!-- 학년/학기 및 급수 선택 상자 -->
+  <!-- 학년/학기 및 급수 선택 -->
   <div class="level-select-box">
     <div class="select-row">
       <label for="grade-select">📚 학년/학기:</label>
       <select id="grade-select" onchange="changeGrade()">
         <option value="1-2" selected>1학년 2학기</option>
-        <!-- 데이터 추가 시 아래 옵션 주석 해제하여 사용 가능 -->
-        <!-- <option value="1-1">1학년 1학기 (준비중)</option> -->
-        <!-- <option value="2-1">2학년 1학기 (준비중)</option> -->
       </select>
     </div>
     <div class="select-row">
@@ -150,10 +137,22 @@
   </div>
 
   <div id="practice-section" class="section active">
+    <!-- 컨트롤 영역 (음성 종류 및 읽기 속도) -->
     <div class="controls">
-      <label for="rate">읽기 속도: </label>
-      <input type="range" id="rate" min="0.5" max="1.0" step="0.1" value="0.7">
-      <span id="rate-val">0.7x (천천히)</span>
+      <div class="control-row">
+        <label for="voice-type">🎙️ 음성 방식:</label>
+        <select id="voice-type" style="padding: 5px 10px; border-radius: 6px; font-weight: bold;">
+          <option value="tts" selected>🤖 기본 TTS (기계음)</option>
+          <option value="ai">🔊 AI 음성 (MP3 파일)</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="rate">⚡ 읽기 속도:</label>
+        <div>
+          <input type="range" id="rate" min="0.5" max="1.0" step="0.1" value="0.7">
+          <span id="rate-val">0.7x</span>
+        </div>
+      </div>
     </div>
 
     <div class="quiz-card">
@@ -167,7 +166,7 @@
 
     <button class="btn btn-next" onclick="nextQuestion()">➡️ 다음 문제로</button>
 
-    <!-- [쿠팡 파트너스 배너 영역] -->
+    <!-- 쿠팡 파트너스 배너 -->
     <div class="coupang-banner-box">
       <p>📝 초등학생 받아쓰기 공책 / 학용품 보러가기</p>
       <a href="https://link.coupang.com/a/hFK09WsnXE" target="_blank" class="btn-coupang">
@@ -182,7 +181,6 @@
 </div>
 
 <script>
-  // 학년/학기별 급수 데이터 구조화
   const defaultGradeData = {
     "1-2": {
       1: ["신나요.", "뿌듯해요.", "둥실둥실", "활짝 피었습니다.", "얼음처럼 꽁꽁!", "내 마음이 반짝반짝", "곰이 그림책을 봅니다.", "계곡에서 첨벙첨벙", "보고 싶어요.", "친구에게 미안했어요."],
@@ -242,7 +240,6 @@
 
   function loadLevelData(gradeKey, level) {
     const saved = localStorage.getItem(`dictation_${gradeKey}_level_${level}`);
-    
     if (saved) {
       currentList = JSON.parse(saved);
     } else if (defaultGradeData[gradeKey] && defaultGradeData[gradeKey][level]) {
@@ -314,30 +311,26 @@
     if (synth.speaking) synth.cancel();
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
 
-    // MP3 경로 (예: audio/1-2_1_1.mp3 또는 기존 오디오 파일 호환 audio/1_1.mp3)
-    const audioPath = `audio/${currentGradeKey}_${currentLevel}_${originalIndex + 1}.mp3`;
-    const fallbackPath = `audio/${currentLevel}_${originalIndex + 1}.mp3`;
+    const voiceType = document.getElementById('voice-type').value;
 
-    const audio = new Audio(audioPath);
+    // AI 음성 선택 시 MP3 파일 재생 시도 (파일명: audio/1-2_1_1.mp3)
+    if (voiceType === 'ai') {
+      const audioPath = `audio/${currentGradeKey}_${currentLevel}_${originalIndex + 1}.mp3`;
+      const audio = new Audio(audioPath);
+      const selectedRate = parseFloat(document.getElementById('rate').value);
+      audio.playbackRate = selectedRate;
 
-    const selectedRate = parseFloat(document.getElementById('rate').value);
-    audio.playbackRate = selectedRate;
-
-    audio.play().then(() => {
-      currentAudio = audio;
-      if (callback) audio.onended = callback;
-    }).catch(() => {
-      // 1-2 기존 예전 오디오 파일 이름(1_1.mp3 형태)으로 시도
-      const fallbackAudio = new Audio(fallbackPath);
-      fallbackAudio.playbackRate = selectedRate;
-      fallbackAudio.play().then(() => {
-        currentAudio = fallbackAudio;
-        if (callback) fallbackAudio.onended = callback;
+      audio.play().then(() => {
+        currentAudio = audio;
+        if (callback) audio.onended = callback;
       }).catch(() => {
-        // MP3 없으면 브라우저 음성 재생
+        // AI 음성 파일이 없을 경우 TTS로 자동 전환
         speakWithTTS(text, callback);
       });
-    });
+    } else {
+      // TTS 모드일 경우 바로 TTS 작동
+      speakWithTTS(text, callback);
+    }
   }
 
   function speakWithTTS(text, callback) {
