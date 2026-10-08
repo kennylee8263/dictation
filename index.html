@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>초등 받아쓰기 급수별 연습기</title>
+
+  <!-- 카카오 애드핏 또는 기타 광고 스크립트 (필요 시 주석 해제 후 사용) -->
+  <!-- <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script> -->
+
   <style>
     body {
       font-family: 'Nanum Gothic', sans-serif;
@@ -23,12 +27,47 @@
     }
     h1 { color: #2c3e50; text-align: center; font-size: 22px; margin-top: 0; }
     
-    .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab-buttons { display: flex; gap: 10px; margin-bottom: 15px; }
     .tab-btn {
       flex: 1; padding: 12px; border: none; border-radius: 10px;
       font-size: 16px; font-weight: bold; cursor: pointer; background: #e0e0e0; color: #555;
     }
     .tab-btn.active { background: #4A90E2; color: white; }
+
+    /* 쿠팡 파트너스 배너 스타일 */
+    .coupang-banner-box {
+      margin: 20px 0 10px 0;
+      padding: 15px;
+      background: #fff9e6;
+      border: 2px dashed #ffb703;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .coupang-banner-box p {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: #d48806;
+    }
+    .btn-coupang {
+      display: inline-block;
+      background: #e63946;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 15px;
+      transition: background 0.2s;
+    }
+    .btn-coupang:hover {
+      background: #c1121f;
+    }
+    .coupang-disclaimer {
+      font-size: 11px;
+      color: #888;
+      margin-top: 8px;
+    }
 
     .section { display: none; }
     .section.active { display: block; }
@@ -112,6 +151,18 @@
     </div>
 
     <button class="btn btn-next" onclick="nextQuestion()">➡️ 다음 문제로</button>
+
+    <!-- [쿠팡 파트너스 배너 영역] -->
+    <div class="coupang-banner-box">
+      <p>📝 초등학생 받아쓰기 공책 / 학용품 보러가기</p>
+      <a href="https://link.coupang.com/a/hFK09WsnXE" target="_blank" class="btn-coupang">
+        🛒 쿠팡에서 학용품 구경하기
+      </a>
+      <div class="coupang-disclaimer">
+        "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다."
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -214,7 +265,6 @@
 
   document.getElementById('rate').addEventListener('input', (e) => {
     document.getElementById('rate-val').innerText = `${e.target.value}x`;
-    // 현재 재생 중인 MP3 오디오가 있다면 즉시 속도 변경 적용
     if (currentAudio) {
       currentAudio.playbackRate = parseFloat(e.target.value);
     }
@@ -227,7 +277,6 @@
     const audioPath = `audio/${currentLevel}_${originalIndex + 1}.mp3`;
     const audio = new Audio(audioPath);
 
-    // 슬라이더에서 설정된 배속 값(0.5 ~ 1.0)을 MP3에 적용
     const selectedRate = parseFloat(document.getElementById('rate').value);
     audio.playbackRate = selectedRate;
 
@@ -235,7 +284,6 @@
       currentAudio = audio;
       if (callback) audio.onended = callback;
     }).catch(() => {
-      // MP3 파일이 없을 때 브라우저 기본 TTS로 재생
       speakWithTTS(text, callback);
     });
   }
