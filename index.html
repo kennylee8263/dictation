@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>초등 받아쓰기 연습 (공책 작성용)</title>
+  <style>
+    body {
+      font-family: 'Nanum Gothic', sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    h1 { color: #2c3e50; text-align: center; font-size: 22px; margin-top: 0; }
+    
+    /* 탭 메뉴 (선생님 설정 / 아이 연습) */
+    .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab-btn {
+      flex: 1; padding: 12px; border: none; border-radius: 10px;
+      font-size: 16px; font-weight: bold; cursor: pointer; background: #e0e0e0; color: #555;
+    }
+    .tab-btn.active { background: #4A90E2; color: white; }
+
+    /* 입력 영역 */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .sentence-input {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    }
+    .sentence-input span { width: 25px; font-weight: bold; color: #555; }
+    .sentence-input input {
+      flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px;
+    }
+
+    /* 연습 영역 */
+    .quiz-card {
+      background: #f9f9f9; border: 2px dashed #4A90E2; border-radius: 15px;
+      padding: 30px 20px; text-align: center; margin-bottom: 20px;
+    }
+    .progress { font-size: 18px; font-weight: bold; color: #4A90E2; margin-bottom: 10px; }
+    .guide-text { font-size: 16px; color: #666; margin-bottom: 20px; }
+
+    /* 버튼 스타일 */
+    .btn {
+      width: 100%; padding: 15px; border: none; border-radius: 12px;
+      font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.2s;
+    }
+    .btn-primary { background: #4CAF50; color: white; }
+    .btn-secondary { background: #FF9800; color: white; }
+    .btn-next { background: #2196F3; color: white; }
+    .btn-save { background: #4A90E2; color: white; margin-top: 10px; }
+
+    .controls { background: #eef2f5; padding: 12px; border-radius: 10px; margin-bottom: 15px; }
+    .controls label { font-size: 14px; font-weight: bold; color: #333; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>✏️ 초등 받아쓰기 연습기</h1>
+
+  <!-- 탭 전환 버튼 -->
+  <div class="tab-buttons">
+    <button class="tab-btn active" onclick="switchTab('practice')">🎧 아이 연습용</button>
+    <button class="tab-btn" onclick="switchTab('setup')">⚙️ 문장 10개 입력</button>
+  </div>
+
+  <!-- 1. 부모/선생님 문장 입력 화면 -->
+  <div id="setup-section" class="section">
+    <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+      💡 받아쓰기로 불러줄 10개 문장을 작성해 주세요. (자동 저장됩니다)
+    </p>
+    <form id="sentence-form">
+      <div id="inputs-container"></div>
+      <button type="button" class="btn btn-save" onclick="saveSentences()">💾 저장하기</button>
+    </form>
+  </div>
+
+  <!-- 2. 아이 받아쓰기 연습 화면 -->
+  <div id="practice-section" class="section active">
+    
+    <div class="controls">
+      <label for="rate">읽기 속도: </label>
+      <input type="range" id="rate" min="0.5" max="1.0" step="0.1" value="0.7">
+      <span id="rate-val">0.7x (천천히)</span>
+    </div>
+
+    <div class="quiz-card">
+      <div id="progress" class="progress">문제 1 / 10</div>
+      <div class="guide-text">✏️ 공책과 연필을 준비하고 소리를 들어보세요!</div>
+      
+      <button class="btn btn-primary" onclick="playCurrent(false)">🔊 문장 듣기</button>
+      <button class="btn btn-secondary" onclick="playCurrent(true)">🔁 3초 뒤 한 번 더 듣기</button>
+    </div>
+
+    <button class="btn btn-next" onclick="nextQuestion()">➡️ 다음 문제로</button>
+  </div>
+</div>
+
+<script>
+  // 기본 제공 10개 문장 예시
+  const defaultSentences = [
+    "바른 자세로 앉아요.",
+    "선생님 말씀에 귀를 기울여요.",
+    "친구와 사이좋게 지냅니다.",
+    "책을 크게 읽었습니다.",
+    "연필을 올바르게 잡아요.",
+    "글씨를 또박또박 씁니다.",
+    "오늘 날씨가 매우 맑습니다.",
+    "약속 시간을 잘 지켜요.",
+    "감사하는 마음을 가져요.",
+    "스스로 정리 정돈을 합니다."
+  ];
+
+  let currentList = [];
+  let shuffledList = [];
+  let currentIndex = 0;
+  const synth = window.speechSynthesis;
+
+  // 초기화 함수
+  window.onload = function() {
+    // 저장된 문장이 있으면 가져오고, 없으면 기본 문장 사용
+    const saved = localStorage.getItem('dictation_sentences');
+    currentList = saved ? JSON.parse(saved) : defaultSentences;
+
+    renderInputs();
+    startPractice();
+  };
+
+  // 문장 입력 폼 생성
+  function renderInputs() {
+    const container = document.getElementById('inputs-container');
+    container.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+      const val = currentList[i] || '';
+      container.innerHTML += `
+        <div class="sentence-input">
+          <span>${i + 1}.</span>
+          <input type="text" id="sentence-${i}" value="${val}" placeholder="${i + 1}번째 문장을 입력하세요" required>
+        </div>
+      `;
+    }
+  }
+
+  // 문장 저장하기
+  function saveSentences() {
+    const newList = [];
+    for (let i = 0; i < 10; i++) {
+      const text = document.getElementById(`sentence-${i}`).value.trim();
+      if (!text) {
+        alert(`${i + 1}번째 문장을 입력해 주세요.`);
+        return;
+      }
+      newList.push(text);
+    }
+    currentList = newList;
+    localStorage.setItem('dictation_sentences', JSON.stringify(currentList));
+    alert('문장 10개가 저장되었습니다!');
+    switchTab('practice');
+    startPractice();
+  }
+
+  // 배열 섞기 (랜덤 생성)
+  function shuffle(array) {
+    return [...array].sort(() => Math.random() - 0.5);
+  }
+
+  // 연습 시작 (랜덤으로 섞기)
+  function startPractice() {
+    shuffledList = shuffle(currentList);
+    currentIndex = 0;
+    updateUI();
+  }
+
+  // 화면 UI 업데이트
+  function updateUI() {
+    document.getElementById('progress').innerText = `문제 ${currentIndex + 1} / ${shuffledList.length}`;
+  }
+
+  // 속도 조절 이벤트
+  document.getElementById('rate').addEventListener('input', (e) => {
+    document.getElementById('rate-val').innerText = `${e.target.value}x`;
+  });
+
+  // 음성 재생 함수
+  function speak(text, callback) {
+    if (synth.speaking) synth.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    utterance.rate = parseFloat(document.getElementById('rate').value);
+
+    // 한국어 목소리 설정
+    const voices = synth.getVoices();
+    const koreanVoice = voices.find(v => v.lang.includes('ko'));
+    if (koreanVoice) utterance.voice = koreanVoice;
+
+    if (callback) utterance.onend = callback;
+
+    synth.speak(utterance);
+  }
+
+  // 현재 문장 읽기 (두 번 읽기 옵션 지원)
+  function playCurrent(repeatTwoTimes = false) {
+    const text = shuffledList[currentIndex];
+    
+    if (!repeatTwoTimes) {
+      speak(`${currentIndex + 1}번. ${text}`);
+    } else {
+      // 첫 번째 읽기 -> 완료 후 3초 뒤 두 번째 읽기
+      speak(`${currentIndex + 1}번. ${text}`, () => {
+        setTimeout(() => {
+          speak(`다시 읽겠습니다. ${text}`);
+        }, 3000);
+      });
+    }
+  }
+
+  // 다음 문제 이동
+  function nextQuestion() {
+    if (currentIndex < shuffledList.length - 1) {
+      currentIndex++;
+      updateUI();
+      playCurrent(false);
+    } else {
+      speak("모든 문제를 다 풀었습니다! 수고하셨습니다.");
+      alert('🎉 10문제를 모두 마쳤습니다! 공책을 확인해 보세요.');
+      startPractice(); // 다시 처음부터 섞어서 준비
+    }
+  }
+
+  // 탭 전환
+  function switchTab(tabName) {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.section');
+    
+    tabs[0].classList.toggle('active', tabName === 'practice');
+    tabs[1].classList.toggle('active', tabName === 'setup');
+    
+    document.getElementById('practice-section').classList.toggle('active', tabName === 'practice');
+    document.getElementById('setup-section').classList.toggle('active', tabName === 'setup');
+  }
+</script>
+
+</body>
+</html>
